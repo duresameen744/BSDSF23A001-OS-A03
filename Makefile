@@ -1,7 +1,18 @@
 # Compiler and flags
 CC = gcc
 CFLAGS = -Wall -g -Iinclude
-LDFLAGS = 
+
+# Check if readline is available
+HAS_READLINE := $(shell pkg-config --exists readline && echo 1 || echo 0)
+
+ifeq ($(HAS_READLINE),1)
+    CFLAGS += -DHAS_READLINE
+    LDFLAGS = -lreadline
+else
+    $(warning Readline not found. Using fallback input method.)
+    LDFLAGS = 
+endif
+
 TARGET = bin/myshell
 SRCDIR = src
 SOURCES = $(wildcard $(SRCDIR)/*.c)
@@ -23,9 +34,9 @@ $(TARGET): $(OBJECTS)
 clean:
 	rm -f $(OBJECTS) $(TARGET)
 
-# Install dependencies (for later features)
+# Install dependencies
 deps:
 	sudo apt update
-	sudo apt install -y libreadline-dev
+	sudo apt install -y libreadline-dev build-essential pkg-config
 
 .PHONY: all clean deps

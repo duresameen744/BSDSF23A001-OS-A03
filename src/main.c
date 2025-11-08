@@ -5,8 +5,18 @@ int main() {
     char** arglist;
     char* expanded_cmd = NULL;
 
-    while ((cmdline = read_cmd(PROMPT, stdin)) != NULL) {
-        // NEW: Handle history expansion before adding to history
+    // Initialize Readline if available
+    initialize_readline();
+
+    while (1) {
+        // Use readline if available, otherwise fallback
+        cmdline = read_cmd_readline(PROMPT);
+        
+        if (cmdline == NULL) {
+            break; // EOF (Ctrl+D)
+        }
+
+        // Handle history expansion before adding to our internal history
         if (is_history_command(cmdline)) {
             expanded_cmd = expand_history_command(cmdline);
             if (expanded_cmd != NULL) {
@@ -20,7 +30,7 @@ int main() {
             }
         }
         
-        // NEW: Add non-empty commands to history (after expansion)
+        // Add non-empty commands to our internal history (after expansion)
         if (cmdline[0] != '\0' && cmdline[0] != '\n') {
             add_to_history(cmdline);
         }
