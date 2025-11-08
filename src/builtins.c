@@ -35,6 +35,7 @@ int builtin_help(char** arglist) {
     printf("  cd <directory>    - Change current working directory\n");
     printf("  exit              - Terminate the shell\n");
     printf("  help              - Display this help message\n");
+    printf("  history           - Display command history\n");
     printf("  jobs              - Display background jobs (not yet implemented)\n");
     return 0;
 }
@@ -42,6 +43,12 @@ int builtin_help(char** arglist) {
 // Built-in command: jobs (placeholder)
 int builtin_jobs(char** arglist) {
     printf("Job control not yet implemented.\n");
+    return 0;
+}
+
+// NEW: Built-in command: history
+int builtin_history(char** arglist) {
+    print_history();
     return 0;
 }
 
@@ -62,6 +69,9 @@ int handle_builtin(char** arglist) {
         return 1;
     } else if (strcmp(arglist[0], "jobs") == 0) {
         builtin_jobs(arglist);
+        return 1;
+    } else if (strcmp(arglist[0], "history") == 0) {  // NEW: history command
+        builtin_history(arglist);
         return 1;
     }
 
