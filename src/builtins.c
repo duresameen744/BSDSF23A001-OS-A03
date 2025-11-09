@@ -44,7 +44,7 @@ int builtin_help(char** arglist) {
     printf("  help              - Display this help message\n");
     printf("  history           - Display command history\n");
     printf("  jobs              - Display background jobs\n");
-    printf("  set               - Display all variables\n");  // NEW: Added set command
+    printf("  set               - Display all variables\n");  // FIXED: Added set command
     return 0;
 }
 
@@ -60,7 +60,7 @@ int builtin_history(char** arglist) {
     return 0;
 }
 
-// NEW: Built-in command: set (display variables)
+// Built-in command: set (display variables)
 int builtin_set(char** arglist) {
     print_variables();
     return 0;
@@ -87,7 +87,7 @@ int handle_builtin(char** arglist) {
     } else if (strcmp(arglist[0], "history") == 0) {
         builtin_history(arglist);
         return 1;
-    } else if (strcmp(arglist[0], "set") == 0) {  // NEW: set command
+    } else if (strcmp(arglist[0], "set") == 0) {
         builtin_set(arglist);
         return 1;
     }
