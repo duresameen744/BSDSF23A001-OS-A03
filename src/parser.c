@@ -11,6 +11,12 @@ int parse_redirection_pipes(char* cmdline, pipeline_t* pipeline) {
         return -1;
     }
 
+    // NEW: Expand variables in the command line
+    char* expanded_cmdline = expand_variables(cmdline);
+    if (expanded_cmdline == NULL) {
+        return -1;
+    }
+
     // Initialize pipeline
     pipeline->num_commands = 0;
     for (int i = 0; i < MAX_PIPES; i++) {
@@ -24,7 +30,7 @@ int parse_redirection_pipes(char* cmdline, pipeline_t* pipeline) {
 
     char* tokens[MAX_LEN];
     int token_count = 0;
-    char* current = cmdline;  // Use original cmdline, no variable expansion
+    char* current = expanded_cmdline;
     
     // Improved tokenization that handles quotes and operators
     while (*current != '\0' && token_count < MAX_LEN - 1) {
@@ -84,6 +90,9 @@ int parse_redirection_pipes(char* cmdline, pipeline_t* pipeline) {
     }
     
     tokens[token_count] = NULL;
+
+    // Free expanded command line after tokenization
+    free(expanded_cmdline);
 
     if (token_count == 0) {
         return -1; // Empty command

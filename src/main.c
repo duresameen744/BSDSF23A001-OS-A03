@@ -9,6 +9,9 @@ int main() {
     
     // Initialize job control
     init_jobs();
+    
+    // NEW: Initialize variables
+    init_variables();
 
     while (1) {
         // Clean up zombie processes before prompt
@@ -36,7 +39,14 @@ int main() {
             }
         }
         
-        // Handle control structures (if-then-else) as single line commands
+        // NEW: Handle variable assignments FIRST
+        if (handle_variable_assignment(cmdline)) {
+            // Variable was assigned, don't execute as command
+            free(cmdline);
+            continue;
+        }
+        
+        // Handle control structures (if-then-else)
         if (is_if_then_else_command(cmdline)) {
             if_block_t if_block;
             if (parse_if_then_else(cmdline, &if_block) == 0) {

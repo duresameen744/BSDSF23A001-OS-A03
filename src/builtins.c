@@ -26,6 +26,13 @@ int builtin_cd(char** arglist) {
             return 1;
         }
     }
+    
+    // Update PWD variable
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        set_variable("PWD", cwd);
+    }
+    
     return 0;
 }
 
@@ -37,10 +44,11 @@ int builtin_help(char** arglist) {
     printf("  help              - Display this help message\n");
     printf("  history           - Display command history\n");
     printf("  jobs              - Display background jobs\n");
+    printf("  set               - Display all variables\n");  // NEW: Added set command
     return 0;
 }
 
-// Built-in command: jobs (now implemented)
+// Built-in command: jobs
 int builtin_jobs(char** arglist) {
     print_jobs();
     return 0;
@@ -49,6 +57,12 @@ int builtin_jobs(char** arglist) {
 // Built-in command: history
 int builtin_history(char** arglist) {
     print_history();
+    return 0;
+}
+
+// NEW: Built-in command: set (display variables)
+int builtin_set(char** arglist) {
+    print_variables();
     return 0;
 }
 
@@ -72,6 +86,9 @@ int handle_builtin(char** arglist) {
         return 1;
     } else if (strcmp(arglist[0], "history") == 0) {
         builtin_history(arglist);
+        return 1;
+    } else if (strcmp(arglist[0], "set") == 0) {  // NEW: set command
+        builtin_set(arglist);
         return 1;
     }
 
