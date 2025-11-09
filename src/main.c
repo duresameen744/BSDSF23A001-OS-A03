@@ -2,8 +2,7 @@
 
 int main() {
     char* cmdline;
-    char** arglist;
-    char* expanded_cmd = NULL;
+    pipeline_t pipeline;
 
     // Initialize Readline if available
     initialize_readline();
@@ -18,7 +17,7 @@ int main() {
 
         // Handle history expansion before adding to our internal history
         if (is_history_command(cmdline)) {
-            expanded_cmd = expand_history_command(cmdline);
+            char* expanded_cmd = expand_history_command(cmdline);
             if (expanded_cmd != NULL) {
                 free(cmdline);
                 cmdline = malloc(strlen(expanded_cmd) + 1);
@@ -35,18 +34,15 @@ int main() {
             add_to_history(cmdline);
         }
 
-        if ((arglist = tokenize(cmdline)) != NULL) {
-            // Check if it's a built-in command first
-            if (handle_builtin(arglist) == 0) {
-                // If not built-in, execute as external command
-                execute(arglist);
-            }
-
-            // Free the memory allocated by tokenize()
-            for (int i = 0; arglist[i] != NULL; i++) {
-                free(arglist[i]);
-            }
-            free(arglist);
+        // NEW: Parse for redirection and pipes
+        if (parse_redirection_pipes(cmdline, &pipeline) > 0) {
+            // Execute the parsed command(s) - removed unused 'result' variable
+            execute_pipeline(&pipeline);
+            
+            // Free allocated memory
+            free_pipeline(&pipeline);
+        } else {
+            fprintf(stderr, "Error: failed to parse command\n");
         }
         
         free(cmdline);

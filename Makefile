@@ -1,21 +1,21 @@
 # Compiler and flags
 CC = gcc
 CFLAGS = -Wall -g -Iinclude
-
-# Check if readline is available
-HAS_READLINE := $(shell pkg-config --exists readline && echo 1 || echo 0)
-
-ifeq ($(HAS_READLINE),1)
-    CFLAGS += -DHAS_READLINE
-    LDFLAGS = -lreadline
-else
-    $(warning Readline not found. Using fallback input method.)
-    LDFLAGS = 
-endif
+LDFLAGS = -lreadline
 
 TARGET = bin/myshell
 SRCDIR = src
-SOURCES = $(wildcard $(SRCDIR)/*.c)
+
+# Explicitly list source files
+SOURCES = $(SRCDIR)/builtins.c \
+          $(SRCDIR)/execute.c \
+          $(SRCDIR)/history.c \
+          $(SRCDIR)/main.c \
+          $(SRCDIR)/readline_support.c \
+          $(SRCDIR)/shell.c \
+          $(SRCDIR)/parser.c \
+          $(SRCDIR)/redirection.c
+
 OBJECTS = $(SOURCES:.c=.o)
 
 # Default target
@@ -33,10 +33,12 @@ $(TARGET): $(OBJECTS)
 # Clean build artifacts
 clean:
 	rm -f $(OBJECTS) $(TARGET)
+	find src -name "*.o" -delete
+	find . -name "test_*" -delete
 
 # Install dependencies
 deps:
 	sudo apt update
-	sudo apt install -y libreadline-dev build-essential pkg-config
+	sudo apt install -y libreadline-dev build-essential
 
 .PHONY: all clean deps

@@ -1,0 +1,6 @@
+total 16
+drwxrwxr-x 2 abc abc 4096 Nov  9 14:58 bin
+-rw-r--r-- 1 abc abc    0 Nov  9 15:01 file_list.txt
+drwxrwxr-x 2 abc abc 4096 Nov  8 15:35 include
+-rw-rw-r-- 1 abc abc  892 Nov  9 14:56 Makefile
+drwxrwxr-x 2 abc abc 4096 Nov  9 14:58 src
