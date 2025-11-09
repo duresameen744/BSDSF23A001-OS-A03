@@ -59,17 +59,33 @@ rl_completion_func_t* rl_attempted_completion_function = NULL;
 #define ARGLEN 30
 #define PROMPT "FCIT> "
 #define HISTORY_SIZE 20
-#define MAX_PIPES 10  // NEW: Maximum number of pipes in a command
+#define MAX_PIPES 10
+#define MAX_JOBS 100  // NEW: Maximum number of background jobs
 
-// NEW: Structure to hold command information with redirection
+// NEW: Job status enumeration
+typedef enum {
+    JOB_RUNNING,
+    JOB_STOPPED,
+    JOB_DONE
+} job_status_t;
+
+// NEW: Structure for background job tracking
+typedef struct {
+    pid_t pid;           // Process ID
+    char* command;       // Command string
+    job_status_t status; // Job status
+    int job_id;          // Job ID number
+} job_t;
+
+// Structure to hold command information with redirection
 typedef struct {
     char* args[MAXARGS];     // Command arguments
     char* input_file;        // File for input redirection (<)
     char* output_file;       // File for output redirection (>)
-    int background;          // Run in background (&) - for next feature
+    int background;          // NEW: Run in background (&)
 } command_t;
 
-// NEW: Structure to hold pipeline information
+// Structure to hold pipeline information
 typedef struct {
     command_t commands[MAX_PIPES];  // Commands in the pipeline
     int num_commands;               // Number of commands in pipeline
@@ -92,11 +108,20 @@ char* expand_history_command(const char* cmdline);
 char* read_cmd_readline(const char* prompt);
 void initialize_readline();
 
-// NEW: Redirection and pipe function prototypes
+// Redirection and pipe function prototypes
 int parse_redirection_pipes(char* cmdline, pipeline_t* pipeline);
 void free_pipeline(pipeline_t* pipeline);
 int execute_redirection(command_t* cmd);
 int execute_pipeline(pipeline_t* pipeline);
 int execute_single_command(command_t* cmd);
+
+// NEW: Job control function prototypes
+void init_jobs();
+void add_job(pid_t pid, const char* command);
+void remove_job(pid_t pid);
+void update_jobs();
+void print_jobs();
+void cleanup_zombies();
+int execute_background(command_t* cmd);
 
 #endif // SHELL_H

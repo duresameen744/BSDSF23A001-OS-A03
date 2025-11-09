@@ -11,6 +11,11 @@ int execute_redirection(command_t* cmd) {
         return 0;
     }
 
+    // Handle background execution
+    if (cmd->background) {
+        return execute_background(cmd);
+    }
+
     int stdin_backup = -1;
     int stdout_backup = -1;
     int input_fd = -1;
@@ -90,130 +95,33 @@ int execute_redirection(command_t* cmd) {
     }
 }
 
-// Execute a pipeline of commands
+// Execute a pipeline of commands (now handles sequential execution)
 int execute_pipeline(pipeline_t* pipeline) {
     if (pipeline == NULL || pipeline->num_commands == 0) {
         return -1;
     }
 
-    // Single command (no pipes)
-    if (pipeline->num_commands == 1) {
-        return execute_single_command(&pipeline->commands[0]);
+    // Execute commands sequentially (for semicolon-separated commands)
+    int result = 0;
+    for (int i = 0; i < pipeline->num_commands; i++) {
+        result = execute_single_command(&pipeline->commands[i]);
+        // Continue with next command even if one fails (like bash)
     }
-
-    int num_commands = pipeline->num_commands;
-    int pipefds[2 * (num_commands - 1)];
-    pid_t pids[num_commands];
-    int status = 0;
-
-    // Create all pipes
-    for (int i = 0; i < num_commands - 1; i++) {
-        if (pipe(pipefds + i * 2) < 0) {
-            perror("pipe");
-            return -1;
-        }
-    }
-
-    // Fork all commands
-    for (int i = 0; i < num_commands; i++) {
-        pids[i] = fork();
-        
-        if (pids[i] == 0) {
-            // Child process
-            
-            // Set up input redirection
-            if (i > 0) {
-                // Read from previous pipe
-                if (dup2(pipefds[(i - 1) * 2], STDIN_FILENO) < 0) {
-                    perror("dup2 stdin");
-                    exit(1);
-                }
-            } else if (pipeline->commands[i].input_file != NULL) {
-                // Input file redirection for first command
-                int input_fd = open(pipeline->commands[i].input_file, O_RDONLY);
-                if (input_fd < 0) {
-                    perror("open input file");
-                    exit(1);
-                }
-                if (dup2(input_fd, STDIN_FILENO) < 0) {
-                    perror("dup2 input file");
-                    close(input_fd);
-                    exit(1);
-                }
-                close(input_fd);
-            }
-
-            // Set up output redirection
-            if (i < num_commands - 1) {
-                // Write to next pipe
-                if (dup2(pipefds[i * 2 + 1], STDOUT_FILENO) < 0) {
-                    perror("dup2 stdout");
-                    exit(1);
-                }
-            } else if (pipeline->commands[i].output_file != NULL) {
-                // Output file redirection for last command
-                int output_fd = open(pipeline->commands[i].output_file, 
-                                   O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                if (output_fd < 0) {
-                    perror("open output file");
-                    exit(1);
-                }
-                if (dup2(output_fd, STDOUT_FILENO) < 0) {
-                    perror("dup2 output file");
-                    close(output_fd);
-                    exit(1);
-                }
-                close(output_fd);
-            }
-
-            // Close all pipe file descriptors in child
-            for (int j = 0; j < 2 * (num_commands - 1); j++) {
-                close(pipefds[j]);
-            }
-
-            // Execute the command
-            if (pipeline->commands[i].args[0] != NULL) {
-                // Check for built-in commands
-                if (handle_builtin(pipeline->commands[i].args)) {
-                    exit(0);
-                }
-                // Execute external command
-                execvp(pipeline->commands[i].args[0], pipeline->commands[i].args);
-                perror("execvp");
-                exit(1);
-            }
-            exit(0);
-        } else if (pids[i] < 0) {
-            perror("fork");
-            return -1;
-        }
-    }
-
-    // Close all pipe file descriptors in parent
-    for (int i = 0; i < 2 * (num_commands - 1); i++) {
-        close(pipefds[i]);
-    }
-
-    // Wait for all child processes
-    for (int i = 0; i < num_commands; i++) {
-        waitpid(pids[i], &status, 0);
-    }
-
-    return WEXITSTATUS(status);
+    return result;
 }
 
-// Execute a single command (with or without redirection)
+// Execute a single command (with or without redirection/background)
 int execute_single_command(command_t* cmd) {
     if (cmd == NULL || cmd->args[0] == NULL) {
         return -1;
     }
 
-    // Check if there's any redirection
-    if (cmd->input_file != NULL || cmd->output_file != NULL) {
+    // Check if there's any redirection or background
+    if (cmd->input_file != NULL || cmd->output_file != NULL || cmd->background) {
         return execute_redirection(cmd);
     }
 
-    // No redirection, use original execute function for built-in check
+    // No redirection/background, use original execute function for built-in check
     if (handle_builtin(cmd->args)) {
         return 0;
     }

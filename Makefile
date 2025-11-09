@@ -14,7 +14,8 @@ SOURCES = $(SRCDIR)/builtins.c \
           $(SRCDIR)/readline_support.c \
           $(SRCDIR)/shell.c \
           $(SRCDIR)/parser.c \
-          $(SRCDIR)/redirection.c
+          $(SRCDIR)/redirection.c \
+          $(SRCDIR)/jobs.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
