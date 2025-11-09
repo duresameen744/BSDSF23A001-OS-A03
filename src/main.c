@@ -7,11 +7,11 @@ int main() {
     // Initialize Readline if available
     initialize_readline();
     
-    // NEW: Initialize job control
+    // Initialize job control
     init_jobs();
 
     while (1) {
-        // NEW: Clean up zombie processes before prompt
+        // Clean up zombie processes before prompt
         cleanup_zombies();
         update_jobs();
 
@@ -36,6 +36,19 @@ int main() {
             }
         }
         
+        // Handle control structures (if-then-else) as single line commands
+        if (is_if_then_else_command(cmdline)) {
+            if_block_t if_block;
+            if (parse_if_then_else(cmdline, &if_block) == 0) {
+                execute_if_block(&if_block);
+                free_if_block(&if_block);
+            } else {
+                fprintf(stderr, "Error: failed to parse if-then-else command\n");
+            }
+            free(cmdline);
+            continue;
+        }
+        
         // Add non-empty commands to our internal history (after expansion)
         if (cmdline[0] != '\0' && cmdline[0] != '\n') {
             add_to_history(cmdline);
@@ -43,7 +56,7 @@ int main() {
 
         // Parse for redirection, pipes, and command chaining
         if (parse_redirection_pipes(cmdline, &pipeline) > 0) {
-            // Execute the parsed command(s) - removed unused 'result' variable
+            // Execute the parsed command(s)
             execute_pipeline(&pipeline);
             
             // Free allocated memory

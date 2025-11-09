@@ -60,16 +60,28 @@ rl_completion_func_t* rl_attempted_completion_function = NULL;
 #define PROMPT "FCIT> "
 #define HISTORY_SIZE 20
 #define MAX_PIPES 10
-#define MAX_JOBS 100  // NEW: Maximum number of background jobs
+#define MAX_JOBS 100
+#define MAX_IF_BLOCKS 10
+#define MAX_BLOCK_LINES 20
 
-// NEW: Job status enumeration
+// Structure for if-then-else block
+typedef struct {
+    char* condition;                    // Condition command
+    char* then_commands[MAX_BLOCK_LINES]; // Commands in then block
+    char* else_commands[MAX_BLOCK_LINES]; // Commands in else block
+    int then_count;                     // Number of commands in then block
+    int else_count;                     // Number of commands in else block
+    int has_else;                       // Whether else block exists
+} if_block_t;
+
+// Job status enumeration
 typedef enum {
     JOB_RUNNING,
     JOB_STOPPED,
     JOB_DONE
 } job_status_t;
 
-// NEW: Structure for background job tracking
+// Structure for background job tracking
 typedef struct {
     pid_t pid;           // Process ID
     char* command;       // Command string
@@ -82,7 +94,7 @@ typedef struct {
     char* args[MAXARGS];     // Command arguments
     char* input_file;        // File for input redirection (<)
     char* output_file;       // File for output redirection (>)
-    int background;          // NEW: Run in background (&)
+    int background;          // Run in background (&)
 } command_t;
 
 // Structure to hold pipeline information
@@ -115,7 +127,7 @@ int execute_redirection(command_t* cmd);
 int execute_pipeline(pipeline_t* pipeline);
 int execute_single_command(command_t* cmd);
 
-// NEW: Job control function prototypes
+// Job control function prototypes
 void init_jobs();
 void add_job(pid_t pid, const char* command);
 void remove_job(pid_t pid);
@@ -123,5 +135,17 @@ void update_jobs();
 void print_jobs();
 void cleanup_zombies();
 int execute_background(command_t* cmd);
+
+// if-then-else function prototypes
+int parse_if_block(char** lines, int num_lines, if_block_t* if_block);
+int execute_if_block(if_block_t* if_block);
+int is_control_keyword(const char* word);
+char* read_multiline_command(const char* initial_prompt);
+void free_if_block(if_block_t* if_block);
+int parse_if_block_from_string(const char* full_command, if_block_t* if_block);  // ADDED: New function prototype
+
+// Single line if-then-else parser
+int is_if_then_else_command(const char* cmdline);
+int parse_if_then_else(const char* cmdline, if_block_t* if_block);
 
 #endif // SHELL_H
